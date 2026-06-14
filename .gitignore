@@ -1,0 +1,35 @@
+# OS
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local env
+.env
+.env.*
+!.env.example
+*.local
+
+# Database (SQLite)
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Editor / tooling
+.claude/
+.vscode/
+.idea/
+*.suo
+*.sw?

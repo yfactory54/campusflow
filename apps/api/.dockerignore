@@ -1,0 +1,10 @@
+node_modules
+data
+*.db
+*.db-wal
+*.db-shm
+.env
+server.test.js
+Dockerfile
+.dockerignore
+README.md
