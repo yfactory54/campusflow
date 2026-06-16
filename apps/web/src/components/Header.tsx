@@ -22,66 +22,65 @@ export default function Header({
   onLogout,
 }: HeaderProps) {
   return (
-    <>
-      <header className="app-header">
-        <div className="inner">
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            <button
-              type="button"
-              onClick={onBackToRoomList}
-              className="btn primary toggle"
-            >
-              목록
-            </button>
+    <header className="border-b border-line bg-canvas">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:px-5 sm:py-7 lg:flex-row lg:items-end lg:justify-between lg:gap-5">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <button
+            type="button"
+            onClick={onBackToRoomList}
+            className="btn primary toggle shrink-0"
+          >
+            목록
+          </button>
 
-            <h1 className="title">
-              {currentRoomName ? `${currentRoomName} 프로젝트` : "프로젝트"} 진행 흐름판
-            </h1>
+          <h1 className="m-0 font-display text-2xl font-bold text-ink sm:text-3xl lg:text-[2.5rem]">
+            {currentRoomName ? `${currentRoomName} 프로젝트` : "프로젝트"} 진행 흐름판
+          </h1>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-[96px] rounded-lg border border-line bg-white px-4 py-3 sm:min-w-[120px] sm:px-5 sm:py-4">
+            <p className="m-0 text-sm text-muted">전체 업무</p>
+            <strong className="mt-2 block text-2xl font-extrabold sm:text-[32px]">{totalCount}</strong>
+          </div>
+          <div className="min-w-[96px] rounded-lg border border-line bg-white px-4 py-3 sm:min-w-[120px] sm:px-5 sm:py-4">
+            <p className="m-0 text-sm text-muted">완료</p>
+            <strong className="mt-2 block text-2xl font-extrabold sm:text-[32px]">{completedCount}</strong>
           </div>
 
-          <div className="stats">
-            <div className="card">
-              <p className="label">전체 업무</p>
-              <strong className="value">{totalCount}</strong>
+          {currentUser && (
+            <div className="min-w-[96px] rounded-lg border border-line bg-white px-4 py-3 sm:min-w-[120px] sm:px-5 sm:py-4">
+              <p className="m-0 text-sm text-muted">{currentUser.role === "admin" ? "관리자" : "사용자"}</p>
+              <strong className="mt-2 block text-base font-extrabold">{currentUser.name}</strong>
             </div>
-            <div className="card">
-              <p className="label">완료</p>
-              <strong className="value">{completedCount}</strong>
-            </div>
+          )}
 
-            {currentUser && (
-              <div className="card">
-                <p className="label">{currentUser.role === "admin" ? "관리자" : "사용자"}</p>
-                <strong className="value" style={{ fontSize: "1rem" }}>{currentUser.name}</strong>
-              </div>
-            )}
-
-            {currentUser?.role === "admin" && (
-              <button
-                type="button"
-                onClick={onOpenAdmin}
-                className="btn secondary toggle"
-              >
-                관리자
-              </button>
-            )}
-
+          {currentUser?.role === "admin" && (
             <button
               type="button"
-              onClick={onOpenTeamManager}
-              className="btn primary toggle person"
-            />
-
-            <button
-              type="button"
-              onClick={onLogout}
+              onClick={onOpenAdmin}
               className="btn secondary toggle"
             >
-              로그아웃
+              관리자
             </button>
-          </div>
+          )}
+
+          <button
+            type="button"
+            onClick={onOpenTeamManager}
+            aria-label="팀원 관리"
+            className="h-14 w-14 shrink-0 rounded-md bg-brand bg-[url(/person.svg)] bg-[length:28px] bg-center bg-no-repeat hover:bg-brand-dark sm:h-[70px] sm:w-[70px] sm:bg-[length:30px]"
+          />
+
+          <button
+            type="button"
+            onClick={onLogout}
+            className="btn secondary toggle"
+          >
+            로그아웃
+          </button>
         </div>
-      </header>
-    </>
+      </div>
+    </header>
   );
 }

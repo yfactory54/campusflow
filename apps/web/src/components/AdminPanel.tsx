@@ -138,23 +138,23 @@ export default function AdminPanel({ currentUser, onClose }: AdminPanelProps) {
   };
 
   return (
-    <div className="room-page">
-      <div className="card">
-        <div className="header">
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-6">
+      <div className="w-full max-w-[640px] rounded-xl border border-gray-200 bg-white p-6 sm:p-8">
+        <div className="mb-6 flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
           <div>
-            <h1 className="title">관리자 패널</h1>
-            <p className="subtitle">사용자 계정과 전체 팀·업무를 관리합니다.</p>
+            <h1 className="m-0 font-display text-[22px] font-extrabold text-gray-800">관리자 패널</h1>
+            <p className="mt-1 text-xs text-slate-500">사용자 계정과 전체 팀·업무를 관리합니다.</p>
           </div>
-          <button type="button" className="btn secondary" onClick={onClose}>
+          <button type="button" className="btn secondary shrink-0" onClick={onClose}>
             닫기
           </button>
         </div>
 
         {/* 사용자 관리 */}
-        <section className="modal-section">
-          <h3 className="modal-subtitle">계정 생성</h3>
-          <form className="form" onSubmit={handleCreateUser}>
-            <div className="form-row">
+        <section className="mt-5">
+          <h3 className="m-0 mb-3 text-[15px] font-bold text-ink">계정 생성</h3>
+          <form className="mb-6 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4" onSubmit={handleCreateUser}>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <input
                 className="control"
                 placeholder="이름"
@@ -169,7 +169,7 @@ export default function AdminPanel({ currentUser, onClose }: AdminPanelProps) {
                 onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
               />
             </div>
-            <div className="form-row">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <input
                 className="control"
                 placeholder="비밀번호 (8자 이상)"
@@ -190,26 +190,26 @@ export default function AdminPanel({ currentUser, onClose }: AdminPanelProps) {
             {(formError || createError) && (
               <p className="message error">{formError || createError}</p>
             )}
-            <button type="submit" className="btn primary full" disabled={creating}>
+            <button type="submit" className="btn primary w-full" disabled={creating}>
               {creating ? "생성 중..." : "계정 생성"}
             </button>
           </form>
         </section>
 
-        <section className="modal-section">
-          <h3 className="modal-subtitle">사용자 목록 ({users.length}명)</h3>
-          <ul className="member-list">
+        <section className="mt-5">
+          <h3 className="m-0 mb-3 text-[15px] font-bold text-ink">사용자 목록 ({users.length}명)</h3>
+          <ul className="m-0 grid list-none gap-2 p-0">
             {users.map((user) => (
-              <li key={user.id} className="member-item">
-                <div className="member-info">
-                  <span className="member-name">
+              <li key={user.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-sm font-bold text-ink">
                     {user.name}
-                    {user.role !== "member" && <span className="badge"> {roleLabels[user.role]}</span>}
-                    {!user.isActive && <span className="badge"> 비활성</span>}
+                    {user.role !== "member" && <span className="ml-1 rounded-full bg-slate-100 px-1.5 py-[3px] text-[11px] text-slate-600">{roleLabels[user.role]}</span>}
+                    {!user.isActive && <span className="ml-1 rounded-full bg-slate-100 px-1.5 py-[3px] text-[11px] text-slate-600">비활성</span>}
                   </span>
-                  <span className="member-email">{user.email}</span>
+                  <span className="text-xs text-muted [overflow-wrap:anywhere]">{user.email}</span>
                 </div>
-                <div className="member-actions">
+                <div className="flex flex-shrink-0 flex-wrap justify-end gap-1.5">
                   <select
                     className="admin-select"
                     value={user.role}
@@ -239,16 +239,16 @@ export default function AdminPanel({ currentUser, onClose }: AdminPanelProps) {
         </section>
 
         {/* 전체 팀·업무 관리 */}
-        <section className="modal-section">
-          <h3 className="modal-subtitle">전체 팀 ({rooms.length}개)</h3>
-          <ul className="member-list">
+        <section className="mt-5">
+          <h3 className="m-0 mb-3 text-[15px] font-bold text-ink">전체 팀 ({rooms.length}개)</h3>
+          <ul className="m-0 grid list-none gap-2 p-0">
             {rooms.map((room) => (
-              <li key={room.id} className="member-item">
-                <div className="member-info">
-                  <span className="member-name">{room.name} (멤버 {room.memberCount}명)</span>
-                  <span className="member-email">{room.description}</span>
+              <li key={room.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-sm font-bold text-ink">{room.name} (멤버 {room.memberCount}명)</span>
+                  <span className="text-xs text-muted [overflow-wrap:anywhere]">{room.description}</span>
                 </div>
-                <div className="member-actions">
+                <div className="flex flex-shrink-0 flex-wrap justify-end gap-1.5">
                   <button type="button" className="admin-btn" onClick={() => handleSelectRoom(room)}>
                     업무 보기
                   </button>
@@ -262,23 +262,23 @@ export default function AdminPanel({ currentUser, onClose }: AdminPanelProps) {
         </section>
 
         {selectedRoom && (
-          <section className="modal-section">
-            <h3 className="modal-subtitle">
+          <section className="mt-5">
+            <h3 className="m-0 mb-3 text-[15px] font-bold text-ink">
               {selectedRoom.name} 업무 ({roomTasks.length}개)
             </h3>
             {roomTasks.length === 0 ? (
-              <p className="modal-empty">등록된 업무가 없습니다.</p>
+              <p className="py-4 text-center text-sm text-muted">등록된 업무가 없습니다.</p>
             ) : (
-              <ul className="member-list">
+              <ul className="m-0 grid list-none gap-2 p-0">
                 {roomTasks.map((task) => (
-                  <li key={task.id} className="member-item">
-                    <div className="member-info">
-                      <span className="member-name">{task.title}</span>
-                      <span className="member-email">
+                  <li key={task.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5">
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className="text-sm font-bold text-ink">{task.title}</span>
+                      <span className="text-xs text-muted [overflow-wrap:anywhere]">
                         담당: {task.assignee || "미지정"} · {statusLabels[task.status]} · {priorityLabels[task.priority]} · 마감 {task.dueDate}
                       </span>
                     </div>
-                    <button type="button" className="admin-btn danger" onClick={() => handleDeleteTask(task)}>
+                    <button type="button" className="admin-btn danger shrink-0" onClick={() => handleDeleteTask(task)}>
                       삭제
                     </button>
                   </li>

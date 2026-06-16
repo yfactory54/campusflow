@@ -101,10 +101,10 @@ export default function TeamManager({ roomId, tasks, onClose }: TeamManagerProps
     };
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h2 className="title">팀원 관리</h2>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+            <div className="max-h-[85vh] w-full max-w-[520px] overflow-y-auto rounded-xl bg-white p-5 sm:p-7" onClick={(e) => e.stopPropagation()}>
+                <div className="mb-5 flex items-center justify-between gap-4">
+                    <h2 className="m-0 font-display text-xl font-bold text-ink">팀원 관리</h2>
                     <button type="button" className="btn secondary" onClick={onClose}>
                         닫기
                     </button>
@@ -114,9 +114,9 @@ export default function TeamManager({ roomId, tasks, onClose }: TeamManagerProps
                     <div className="message info">팀원 정보를 불러오는 중...</div>
                 )}
 
-                <div className="modal-section">
-                    <div className="contribution-header">
-                        <h3 className="modal-subtitle">AI 기여도 분석</h3>
+                <div className="mt-5">
+                    <div className="flex items-center justify-between gap-3">
+                        <h3 className="m-0 text-[15px] font-bold text-ink">AI 기여도 분석</h3>
                         <button
                             type="button"
                             className="btn primary"
@@ -127,60 +127,60 @@ export default function TeamManager({ roomId, tasks, onClose }: TeamManagerProps
                         </button>
                     </div>
 
-                    {analyzeError && <div className="message error">{analyzeError}</div>}
+                    {analyzeError && <div className="message error mt-3">{analyzeError}</div>}
 
                     {analyzing && (
-                        <div className="message info">
+                        <div className="message info mt-3">
                             업무 목록을 분석하여 멤버별 기여도를 계산하는 중...
                         </div>
                     )}
 
                     {contribution && !analyzing && (
                         <>
-                            <ul className="contribution-list">
+                            <ul className="m-0 mt-4 grid list-none gap-3.5 p-0">
                                 {contribution.members.map((member) => (
-                                    <li key={member.name} className="contribution-item">
-                                        <div className="contribution-row">
-                                            <span className="contribution-name">{member.name}</span>
-                                            <span className="contribution-score">{member.score}%</span>
+                                    <li key={member.name} className="rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-3">
+                                        <div className="mb-2 flex items-baseline justify-between gap-3">
+                                            <span className="text-sm font-bold text-ink">{member.name}</span>
+                                            <span className="text-base font-extrabold text-brand">{member.score}%</span>
                                         </div>
-                                        <div className="contribution-track">
+                                        <div className="h-2.5 overflow-hidden rounded-full bg-canvas">
                                             <div
-                                                className="contribution-bar"
+                                                className="h-full rounded-full bg-brand transition-[width] duration-300"
                                                 style={{ width: `${Math.max(0, Math.min(100, member.score))}%` }}
                                             />
                                         </div>
-                                        <div className="contribution-meta">
+                                        <div className="mt-2 text-xs font-bold text-muted">
                                             담당 {member.assignedCount} · 완료 {member.completedCount}
                                         </div>
                                         {member.summary && (
-                                            <p className="contribution-summary">{member.summary}</p>
+                                            <p className="mt-1.5 text-[13px] leading-normal text-gray-600">{member.summary}</p>
                                         )}
                                     </li>
                                 ))}
                             </ul>
                             {contribution.summary && (
-                                <p className="contribution-overall">{contribution.summary}</p>
+                                <p className="mt-4 rounded-lg bg-[#d8efe3] px-3.5 py-3 text-[13px] leading-relaxed text-ink">{contribution.summary}</p>
                             )}
                         </>
                     )}
                 </div>
 
-                <div className="modal-section">
-                    <h3 className="modal-subtitle">현재 팀원 ({members.length}명)</h3>
+                <div className="mt-5">
+                    <h3 className="m-0 mb-3 text-[15px] font-bold text-ink">현재 팀원 ({members.length}명)</h3>
                     {members.length === 0 ? (
-                        <p className="modal-empty">팀원이 없습니다.</p>
+                        <p className="py-4 text-center text-sm text-muted">팀원이 없습니다.</p>
                     ) : (
-                        <ul className="member-list">
+                        <ul className="m-0 grid list-none gap-2 p-0">
                             {members.map((member) => (
-                                <li key={member.id} className="member-item">
-                                    <div className="member-info">
-                                        <span className="member-name">{member.name}</span>
-                                        <span className="member-email">{member.email}</span>
+                                <li key={member.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5">
+                                    <div className="flex min-w-0 flex-col gap-0.5">
+                                        <span className="text-sm font-bold text-ink">{member.name}</span>
+                                        <span className="text-xs text-muted [overflow-wrap:anywhere]">{member.email}</span>
                                     </div>
                                     <button
                                         type="button"
-                                        className="btn-remove"
+                                        className="shrink-0 rounded-md border border-danger bg-white px-3.5 py-1.5 text-[13px] font-bold text-danger hover:bg-[#fde8e6]"
                                         onClick={() => handleRemove(member.id)}
                                     >
                                         제거
@@ -192,18 +192,18 @@ export default function TeamManager({ roomId, tasks, onClose }: TeamManagerProps
                 </div>
 
                 {availableUsers.length > 0 && (
-                    <div className="modal-section">
-                        <h3 className="modal-subtitle">추가 가능한 회원</h3>
-                        <ul className="member-list">
+                    <div className="mt-5">
+                        <h3 className="m-0 mb-3 text-[15px] font-bold text-ink">추가 가능한 회원</h3>
+                        <ul className="m-0 grid list-none gap-2 p-0">
                             {availableUsers.map((user) => (
-                                <li key={user.id} className="member-item">
-                                    <div className="member-info">
-                                        <span className="member-name">{user.name}</span>
-                                        <span className="member-email">{user.email}</span>
+                                <li key={user.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5">
+                                    <div className="flex min-w-0 flex-col gap-0.5">
+                                        <span className="text-sm font-bold text-ink">{user.name}</span>
+                                        <span className="text-xs text-muted [overflow-wrap:anywhere]">{user.email}</span>
                                     </div>
                                     <button
                                         type="button"
-                                        className="btn-add"
+                                        className="shrink-0 rounded-md border border-brand bg-white px-3.5 py-1.5 text-[13px] font-bold text-brand hover:bg-[#d8efe3]"
                                         onClick={() => handleAdd(user.id)}
                                     >
                                         추가

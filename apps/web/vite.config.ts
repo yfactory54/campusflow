@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,7 +19,7 @@ export default defineConfig(({ mode }) => {
   const apiBase = process.env.VITE_API_BASE || env.VITE_API_BASE || "/api/";
 
   return {
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     server: {
       host: true,
       port: webPort,

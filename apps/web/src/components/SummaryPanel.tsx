@@ -26,22 +26,22 @@ export default function SummaryPanel({ tasks }: SummaryPanelProps) {
       : 0;
 
   const items = [
-    { label: "3일 내 마감", value: urgentCount, tone: "tone-danger" },
-    { label: "기한 초과", value: overdueCount, tone: "tone-danger" },
-    { label: "진행 중", value: activeCount, tone: "tone-info" },
-    { label: "완료율", value: `${doneRate}%`, tone: "tone-success" },
+    { label: "3일 내 마감", value: urgentCount, tone: "text-danger" },
+    { label: "기한 초과", value: overdueCount, tone: "text-danger" },
+    { label: "진행 중", value: activeCount, tone: "text-info" },
+    { label: "완료율", value: `${doneRate}%`, tone: "text-brand" },
   ];
 
   return (
     <>
-      <section className="summary-grid compact" aria-label="업무 요약">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="업무 요약">
         {items.map((item) => (
           <div
             key={item.label}
-            className="card"
+            className="min-w-0 rounded-lg border border-line bg-white px-4 py-3 sm:px-5 sm:py-4"
           >
-            <p className="label">{item.label}</p>
-            <strong className={`value ${item.tone}`}>
+            <p className="m-0 text-sm text-muted">{item.label}</p>
+            <strong className={`mt-2 block text-2xl font-extrabold sm:text-[32px] ${item.tone}`}>
               {item.value}
             </strong>
           </div>

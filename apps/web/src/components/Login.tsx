@@ -67,17 +67,17 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     };
 
     return (
-        <div className="auth-page">
-            <div className="card">
-                <h1 className="title">로그인</h1>
-                <p className="help">계속하려면 세부 정보를 입력하세요.</p>
+        <div className="flex min-h-screen items-center justify-center bg-gray-100 p-6">
+            <div className="w-full max-w-[375px] rounded-xl border border-gray-300 bg-white px-6 py-10 text-gray-700">
+                <h1 className="m-0 mb-2.5 font-display text-[22px] font-bold text-ink">로그인</h1>
+                <p className="mb-5 text-sm">계속하려면 세부 정보를 입력하세요.</p>
                 {fetchError && (
-                    <p className="message error">
+                    <p className="message error mb-4">
                         {fetchError}
                     </p>
                 )}
-                <form className="form-grid" onSubmit={handleSubmit}>
-                    <div className="field-block">
+                <form className="grid gap-4" onSubmit={handleSubmit}>
+                    <div className="grid gap-2">
                         <input
                             type="email"
                             className="control"
@@ -93,8 +93,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                         )}
                     </div>
 
-                    <div className="field-block">
-                        <div className="password-field">
+                    <div className="grid gap-2">
+                        <div className="relative">
                             <input
                                 type={showPassword ? "text" : "password"}
                                 className="control"
@@ -105,10 +105,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                             />
                             <button
                                 type="button"
-                                className="password-toggle"
+                                className="absolute right-3 top-1/2 w-6 -translate-y-1/2 border-0 bg-transparent p-0"
                                 onClick={toggleShowPassword}
                             >
                                 <img
+                                    className="block w-full"
                                     src={showPassword ? "/eyes.svg" : "/eyes-closed.svg"}
                                 />
                             </button>
@@ -121,17 +122,17 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                         )}
                     </div>
 
-                    <div className="checkbox-row">
+                    <div className="flex items-center gap-2">
                         <input
                             type="checkbox"
                             id="chk"
-                            className="checkbox"
+                            className="h-5 w-5 appearance-none rounded-[5px] border border-gray-700 bg-white bg-center bg-no-repeat checked:bg-gray-700 checked:bg-[url(/check-icon.svg)] checked:bg-[length:14px]"
                             checked={rememberMe}
                             onChange={handleMeChange}
                         />
                         <label
                             htmlFor="chk"
-                            className="checkbox-label"
+                            className="cursor-pointer text-sm text-gray-700"
                         >
                             아이디 저장
                         </label>
@@ -139,7 +140,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
                     <button
                         type="submit"
-                        className="btn primary login"
+                        className="btn primary h-11 w-full"
                         disabled={loading}
                     >
                         {loading ? "로그인 중..." : "로그인"}

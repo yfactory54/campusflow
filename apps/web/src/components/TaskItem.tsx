@@ -17,15 +17,15 @@ interface TaskItemProps {
 }
 
 const priorityClassNames: Record<Task["priority"], string> = {
-  high: "priority-high",
-  medium: "priority-medium",
-  low: "priority-low",
+  high: "text-danger",
+  medium: "text-warn",
+  low: "text-info",
 };
 
 const dueToneClassNames: Record<ReturnType<typeof getDueTone>, string> = {
-  danger: "due-danger",
-  warning: "due-warning",
-  normal: "due-normal",
+  danger: "text-danger",
+  warning: "text-info",
+  normal: "text-brand",
 };
 
 const nextStatusByStatus: Record<TaskStatus, TaskStatus> = {
@@ -93,43 +93,43 @@ export default function TaskItem({ task, dispatch, currentRoomId }: TaskItemProp
 
   return (
     <>
-      <article className="task-card">
-        <div className="header">
-          <div className="title-block">
-            <div className="badge-row">
+      <article className="rounded-lg border border-line bg-white p-5 transition-transform hover:-translate-y-0.5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <div className="mb-3 flex flex-wrap gap-2">
               <span
-                className={`badge ${priorityClassNames[task.priority]}`}
+                className={`rounded-md border border-current bg-white px-2.5 py-[5px] text-xs font-extrabold ${priorityClassNames[task.priority]}`}
               >
                 {priorityLabels[task.priority]}
               </span>
             </div>
-            <h3 className="title">
+            <h3 className="m-0 font-display text-2xl font-bold text-ink [overflow-wrap:anywhere] sm:text-[28px]">
               {task.title}
             </h3>
-            <p className="assignee">
+            <p className="mt-1 text-sm font-bold text-info">
               담당자: {task.assignee || "미지정"}
             </p>
           </div>
 
-          <div className="actions">
+          <div className="flex flex-row flex-wrap gap-2 sm:min-w-[128px] sm:flex-col">
             <button
               type="button"
               onClick={handleStatusButtonClick}
-              className="action-btn status"
+              className="min-w-[88px] flex-1 whitespace-nowrap rounded-md border border-brand bg-white px-4 py-3 text-sm font-bold text-brand hover:bg-[#d8efe3] sm:w-full sm:flex-none"
             >
               {statusButtonLabels[task.status]}
             </button>
             <button
               type="button"
               onClick={handleEditClick}
-              className="action-btn edit"
+              className="min-w-[88px] flex-1 whitespace-nowrap rounded-md border border-info bg-white px-4 py-3 text-sm font-bold text-info hover:bg-[#e0ecf4] sm:w-full sm:flex-none"
             >
               수정
             </button>
             <button
               type="button"
               onClick={handleDeleteClick}
-              className="action-btn delete"
+              className="min-w-[88px] flex-1 whitespace-nowrap rounded-md border border-danger bg-white px-4 py-3 text-sm font-bold text-danger hover:bg-[#fde8e6] sm:w-full sm:flex-none"
             >
               삭제
             </button>
@@ -137,21 +137,21 @@ export default function TaskItem({ task, dispatch, currentRoomId }: TaskItemProp
         </div>
 
         {task.memo && (
-          <p className="memo">
+          <p className="mt-4 whitespace-pre-line leading-[1.7] text-[#555555] [overflow-wrap:anywhere]">
             {task.memo}
           </p>
         )}
 
-        <div className="meta-grid">
+        <div className="mt-5 grid grid-cols-2 gap-3 border-t border-line pt-4">
           <div>
-            <p className="meta-label">
+            <p className="m-0 text-xs font-extrabold uppercase tracking-[0.12em] text-[#999999]">
               마감
             </p>
-            <p className="meta-value">
+            <p className="mt-1 font-bold">
               {formatDueDate(task.dueDate)}
             </p>
             <p
-              className={`due-tone ${dueToneClassNames[getDueTone(task.dueDate)]}`}
+              className={`mt-1 font-bold ${dueToneClassNames[getDueTone(task.dueDate)]}`}
             >
               {getDueLabel(task.dueDate)}
             </p>
@@ -159,10 +159,10 @@ export default function TaskItem({ task, dispatch, currentRoomId }: TaskItemProp
 
 
           <div>
-            <p className="meta-label">
+            <p className="m-0 text-xs font-extrabold uppercase tracking-[0.12em] text-[#999999]">
               현재 상태
             </p>
-            <p className="status-value">
+            <p className="mt-1 text-lg font-bold text-brand">
               {statusLabels[task.status]}
             </p>
           </div>

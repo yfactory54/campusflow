@@ -48,19 +48,19 @@ export default function FilterBar({
   return (
     <>
       <section
-        className="filter-card"
+        className="rounded-lg border border-line bg-white p-4"
         aria-label="검색과 필터"
       >
-        <div className="heading">
-          <h2 className="title">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="font-display text-xl font-bold text-ink sm:text-[22px]">
             업무 보드
           </h2>
-          <span className="badge">
+          <span className="rounded-md bg-[#d8efe3] px-2.5 py-1.5 text-sm font-extrabold text-brand">
             {resultCount}개 표시
           </span>
         </div>
 
-        <div className="grid">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <label className="field compact">
             검색
             <input

@@ -135,7 +135,7 @@ export default function App() {
 
   if (initializing) {
     return (
-      <div className="status-container">
+      <div className="mx-auto mt-4 max-w-7xl px-4 sm:px-5">
         <div className="message info">세션을 확인하는 중...</div>
       </div>
     );
@@ -188,7 +188,7 @@ export default function App() {
       )}
 
       {tasksLoading && (
-        <div className="status-container">
+        <div className="mx-auto mt-4 max-w-7xl px-4 sm:px-5">
           <div className="message info">
             실시간 업무 목록을 원격지 서버에서 안전하게 동기화 중...
           </div>
@@ -196,19 +196,19 @@ export default function App() {
       )}
 
       {tasksError && (
-        <div className="status-container">
+        <div className="mx-auto mt-4 max-w-7xl px-4 sm:px-5">
           <div className="message error">
             {tasksError}
           </div>
         </div>
       )}
 
-      <main className="app-main">
-        <div className="app-column">
+      <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-5 lg:grid-cols-[380px_1fr]">
+        <div className="flex min-w-0 flex-col gap-5">
           <TaskForm dispatch={dispatch} currentRoomId={selectedRoomId} />
         </div>
 
-        <div className="app-column">
+        <div className="flex min-w-0 flex-col gap-5">
           <DashboardSummary tasks={tasks} />
           <FilterBar filters={filters} resultCount={filteredTasks.length} onFilterChange={setFilters} />
           <TaskList tasks={filteredTasks} totalCount={tasks.length} dispatch={dispatch} currentRoomId={selectedRoomId} />

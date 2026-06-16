@@ -68,24 +68,24 @@ export default function RoomList({ onSelectRoom, canCreateRoom }: RoomListProps)
     };
 
     return (
-        <div className="room-page">
-            <div className="card">
+        <div className="flex min-h-screen items-center justify-center bg-gray-100 p-6">
+            <div className="w-full max-w-[480px] rounded-xl border border-gray-200 bg-white p-6 sm:p-8">
                 {listLoading && (
-                    <div className="message info">
+                    <div className="message info mb-4">
                         팀 목록을 불러오는 중...
                     </div>
                 )}
                 {listError && (
-                    <div className="message error">
+                    <div className="message error mb-4">
                         {listError}
                     </div>
                 )}
-                <div className="header">
+                <div className="mb-6 flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
-                        <h1 className="title">
+                        <h1 className="m-0 font-display text-[22px] font-extrabold text-gray-800">
                             참여 중인 팀 목록
                         </h1>
-                        <p className="subtitle">
+                        <p className="mt-1 text-xs text-slate-500">
                             {canCreateRoom
                                 ? "협업을 진행할 팀을 선택하거나 새 팀을 만드세요."
                                 : "협업을 진행할 팀을 선택하세요."}
@@ -95,7 +95,7 @@ export default function RoomList({ onSelectRoom, canCreateRoom }: RoomListProps)
                         <button
                             type="button"
                             onClick={() => setIsAdding(!isAdding)}
-                            className={`btn toggle ${isAdding ? "secondary" : "primary"}`}
+                            className={`btn toggle shrink-0 ${isAdding ? "secondary" : "primary"}`}
                         >
                             {isAdding ? "닫기" : "팀 등록"}
                         </button>
@@ -105,10 +105,10 @@ export default function RoomList({ onSelectRoom, canCreateRoom }: RoomListProps)
                 {isAdding && (
                     <form
                         onSubmit={handleAddTeam}
-                        className="form"
+                        className="mb-6 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4"
                     >
-                        <div className="field-block">
-                            <label className="field">
+                        <div className="grid gap-2">
+                            <label className="text-xs font-bold text-slate-600">
                                 팀 이름 *
                             </label>
                             <input
@@ -125,8 +125,8 @@ export default function RoomList({ onSelectRoom, canCreateRoom }: RoomListProps)
                             {error && <p className="error small">{error}</p>}
                         </div>
 
-                        <div className="field-block">
-                            <label className="field">
+                        <div className="grid gap-2">
+                            <label className="text-xs font-bold text-slate-600">
                                 설명 (선택)
                             </label>
                             <input
@@ -146,7 +146,7 @@ export default function RoomList({ onSelectRoom, canCreateRoom }: RoomListProps)
 
                         <button
                             type="submit"
-                            className="btn primary full"
+                            className="btn primary w-full"
                             disabled={addLoading}
                         >
                             {addLoading ? "팀 등록 중..." : "팀 등록 완료"}
@@ -154,35 +154,35 @@ export default function RoomList({ onSelectRoom, canCreateRoom }: RoomListProps)
                     </form>
                 )}
 
-                <div className="list">
+                <div className="grid max-h-[360px] gap-3 overflow-y-auto pr-1">
                     {teams.map((team) => (
                         <button
                             type="button"
                             key={team.id}
                             onClick={() => onSelectRoom(team.id, team.name)}
-                            className="room-btn"
+                            className="flex w-full items-center justify-between gap-4 rounded-xl border border-slate-100 bg-white p-4 text-left hover:border-brand-hover hover:bg-[#e2f1ea]"
                         >
-                            <div className="info">
-                                <div className="title-row">
-                                    <h2 className="name">
+                            <div className="grid min-w-0 gap-1">
+                                <div className="flex items-center gap-2">
+                                    <h2 className="m-0 text-base text-gray-800">
                                         {team.name}
                                     </h2>
-                                    <span className="badge">
+                                    <span className="rounded-full bg-slate-100 px-1.5 py-[3px] text-[11px] text-slate-600">
                                         멤버 {team.memberCount}명
                                     </span>
                                 </div>
-                                <p className="desc">
+                                <p className="m-0 max-w-[320px] overflow-hidden text-ellipsis whitespace-nowrap text-xs text-slate-500">
                                     {team.description}
                                 </p>
                             </div>
-                            <div className="arrow">
-                                <img className="icon" src="/arrow.svg" />
+                            <div className="flex items-center text-slate-400">
+                                <img className="h-4 w-4" src="/arrow.svg" />
                             </div>
                         </button>
                     ))}
 
                     {teams.length === 0 && (
-                        <div className="empty">
+                        <div className="py-10 text-center text-slate-500">
                             참여 중인 팀이 없습니다. 새 팀을 만들어 보세요!
                         </div>
                     )}

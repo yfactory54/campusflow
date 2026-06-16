@@ -109,21 +109,21 @@ export default function TaskEditForm({
 
   return (
     <>
-      <article className="edit-card">
-        <div className="header">
-          <p className="mode-label">편집 모드</p>
-          <h3 className="title">
+      <article className="rounded-lg border-2 border-brand-edit bg-white p-5">
+        <div className="mb-5">
+          <p className="mb-1 text-sm font-extrabold text-brand">편집 모드</p>
+          <h3 className="m-0 font-display text-2xl font-bold text-ink sm:text-[28px]">
             업무 수정
           </h3>
         </div>
 
         {saveError && (
-          <div className="message error">
+          <div className="message error mb-4">
             {saveError}
           </div>
         )}
 
-        <form className="form-grid" onSubmit={handleSubmit}>
+        <form className="grid gap-4" onSubmit={handleSubmit}>
           <label className="field">
             업무명
             <input
@@ -139,7 +139,7 @@ export default function TaskEditForm({
             )}
           </label>
 
-          <div className="form-row">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="field">
               마감일
               <input
@@ -183,7 +183,7 @@ export default function TaskEditForm({
             />
           </label>
 
-          <div className="actions">
+          <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={handleCancelClick}

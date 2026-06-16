@@ -107,25 +107,25 @@ export default function TaskForm({ dispatch, currentRoomId }: TaskFormProps) {
   return (
     <>
       <section
-        className="panel"
+        className="rounded-lg border border-line bg-white p-5"
         aria-label="업무 입력"
       >
-        <div className="header">
-          <h2 className="title">
+        <div className="mb-5">
+          <h2 className="m-0 font-display text-2xl font-bold text-ink sm:text-[28px]">
             새 업무 등록
           </h2>
-          <p className="description">
+          <p className="mt-1 text-sm text-muted">
             필수 항목은 업무명과 마감일입니다. 담당자는 로그인한 사용자로 자동 지정됩니다.
           </p>
         </div>
 
         {addError && (
-          <div className="message error">
+          <div className="message error mb-4">
             {addError}
           </div>
         )}
 
-        <form className="form-grid" onSubmit={handleSubmit}>
+        <form className="grid gap-4" onSubmit={handleSubmit}>
           <label className="field">
             업무명
             <input
@@ -141,7 +141,7 @@ export default function TaskForm({ dispatch, currentRoomId }: TaskFormProps) {
             )}
           </label>
 
-          <div className="form-row">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="field">
               마감일
               <input
