@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 import useFetch from "../fetch/useFetch";
-import type { Task } from "../types/task";
+
+import type { AuthUser } from "../types/user";
 
 interface User {
     id: number;
     name: string;
-    email: string;
+    email?: string;
 }
 
 interface TeamManagerProps {
     roomId: number;
-    tasks: Task[];
+    room: { createdBy: number | null };
+    currentUser: AuthUser;
+
     onClose: () => void;
 }
 
@@ -36,6 +39,7 @@ interface ContributionMember {
 
 interface Contribution {
     members: ContributionMember[];
+    source?: "llm" | "fallback";
     summary: string;
 }
 
@@ -43,60 +47,79 @@ interface ContributionResponse {
     contribution: Contribution;
 }
 
-export default function TeamManager({ roomId, tasks, onClose }: TeamManagerProps) {
+export default function TeamManager({ roomId, room, currentUser, onClose }: TeamManagerProps) {
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [members, setMembers] = useState<User[]>([]);
     const [contribution, setContribution] = useState<Contribution | null>(null);
+    const [userSearch, setUserSearch] = useState("");
 
-    const { request: fetchUsers } = useFetch<UsersResponse>();
+    const { request: fetchUsers, loading: usersLoading, error: usersError } = useFetch<UsersResponse>();
     const { request: fetchMembers, loading: membersLoading } = useFetch<MembersResponse>();
-    const { request: addMember } = useFetch<AddMemberResponse>();
-    const { request: removeMember } = useFetch();
+    const { request: addMember, error: addError } = useFetch<AddMemberResponse>();
+    const { request: removeMember, error: removeError } = useFetch();
     const {
         request: analyzeContribution,
         loading: analyzing,
         error: analyzeError,
     } = useFetch<ContributionResponse>();
 
+    const canManage =
+        currentUser.role === "admin" ||
+        currentUser.role === "leader" ||
+        String(room.createdBy) === String(currentUser.id);
+    const canSearchUsers = currentUser.role === "admin" || currentUser.role === "leader";
+
     useEffect(() => {
-        const load = async () => {
-            const [usersData, membersData] = await Promise.all([
-                fetchUsers("users"),
-                fetchMembers(`rooms/${roomId}/members`),
-            ]);
-            if (usersData?.users) setAllUsers(usersData.users);
-            if (membersData?.members) setMembers(membersData.members);
+        const loadMembers = async () => {
+            const result = await fetchMembers(`rooms/${roomId}/members`);
+            if (result.ok && result.data?.members) setMembers(result.data.members);
         };
-        load();
-    }, [roomId, fetchUsers, fetchMembers]);
+        loadMembers();
+    }, [roomId, fetchMembers]);
+
+    useEffect(() => {
+        const query = userSearch.trim();
+        if (!canSearchUsers || !query) {
+            return;
+        }
+
+        const loadUsers = async () => {
+            const result = await fetchUsers(`users/search?q=${encodeURIComponent(query)}`);
+            if (result.ok && result.data?.users) setAllUsers(result.data.users);
+        };
+        loadUsers();
+    }, [canSearchUsers, fetchUsers, userSearch]);
 
     const memberIds = new Set(members.map((m) => m.id));
-    const availableUsers = allUsers.filter((u) => !memberIds.has(u.id));
+    const availableUsers = canSearchUsers && userSearch.trim() ? allUsers.filter((u) => !memberIds.has(u.id)) : [];
 
     const handleAdd = async (userId: number) => {
-        const data = await addMember(`rooms/${roomId}/members`, {
+        if (!canManage) return;
+        const result = await addMember(`rooms/${roomId}/members`, {
             method: "POST",
             body: { userId },
         });
-        if (data?.member) {
-            setMembers([...members, data.member]);
+        if (result.ok && result.data?.member) {
+            setMembers([...members, result.data.member]);
+            setUserSearch("");
+            setAllUsers([]);
         }
     };
 
     const handleRemove = async (userId: number) => {
-        await removeMember(`rooms/${roomId}/members/${userId}`, {
+        if (!canManage) return;
+        const result = await removeMember(`rooms/${roomId}/members/${userId}`, {
             method: "DELETE",
         });
-        setMembers(members.filter((m) => m.id !== userId));
+        if (result.ok) setMembers(members.filter((m) => m.id !== userId));
     };
 
     const handleAnalyze = async () => {
-        const data = await analyzeContribution(`rooms/${roomId}/contribution`, {
+        const result = await analyzeContribution(`rooms/${roomId}/contribution`, {
             method: "POST",
-            body: { tasks },
         });
-        if (data?.contribution) {
-            setContribution(data.contribution);
+        if (result.ok && result.data?.contribution) {
+            setContribution(result.data.contribution);
         }
     };
 
@@ -112,6 +135,10 @@ export default function TeamManager({ roomId, tasks, onClose }: TeamManagerProps
 
                 {membersLoading && (
                     <div className="message info">팀원 정보를 불러오는 중...</div>
+                )}
+
+                {(addError || removeError) && (
+                    <div className="message error mt-3">{addError || removeError}</div>
                 )}
 
                 <div className="mt-5">
@@ -159,6 +186,11 @@ export default function TeamManager({ roomId, tasks, onClose }: TeamManagerProps
                                     </li>
                                 ))}
                             </ul>
+                            {contribution.source === "fallback" && (
+                                <span className="mt-3 inline-block rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-muted">
+                                    규칙 기반 결과
+                                </span>
+                            )}
                             {contribution.summary && (
                                 <p className="mt-4 rounded-lg bg-[#d8efe3] px-3.5 py-3 text-[13px] leading-relaxed text-ink">{contribution.summary}</p>
                             )}
@@ -176,41 +208,58 @@ export default function TeamManager({ roomId, tasks, onClose }: TeamManagerProps
                                 <li key={member.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5">
                                     <div className="flex min-w-0 flex-col gap-0.5">
                                         <span className="text-sm font-bold text-ink">{member.name}</span>
-                                        <span className="text-xs text-muted [overflow-wrap:anywhere]">{member.email}</span>
+                                        {member.email && <span className="text-xs text-muted [overflow-wrap:anywhere]">{member.email}</span>}
                                     </div>
-                                    <button
-                                        type="button"
-                                        className="shrink-0 rounded-md border border-danger bg-white px-3.5 py-1.5 text-[13px] font-bold text-danger hover:bg-[#fde8e6]"
-                                        onClick={() => handleRemove(member.id)}
-                                    >
-                                        제거
-                                    </button>
+                                    {canManage && (
+                                        <button
+                                            type="button"
+                                            className="shrink-0 rounded-md border border-danger bg-white px-3.5 py-1.5 text-[13px] font-bold text-danger hover:bg-[#fde8e6]"
+                                            onClick={() => handleRemove(member.id)}
+                                        >
+                                            제거
+                                        </button>
+                                    )}
                                 </li>
                             ))}
                         </ul>
                     )}
                 </div>
 
-                {availableUsers.length > 0 && (
+                {canManage && (
                     <div className="mt-5">
-                        <h3 className="m-0 mb-3 text-[15px] font-bold text-ink">추가 가능한 회원</h3>
-                        <ul className="m-0 grid list-none gap-2 p-0">
-                            {availableUsers.map((user) => (
-                                <li key={user.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5">
-                                    <div className="flex min-w-0 flex-col gap-0.5">
-                                        <span className="text-sm font-bold text-ink">{user.name}</span>
-                                        <span className="text-xs text-muted [overflow-wrap:anywhere]">{user.email}</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className="shrink-0 rounded-md border border-brand bg-white px-3.5 py-1.5 text-[13px] font-bold text-brand hover:bg-[#d8efe3]"
-                                        onClick={() => handleAdd(user.id)}
-                                    >
-                                        추가
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
+                        <h3 className="m-0 mb-3 text-[15px] font-bold text-ink">팀원 추가</h3>
+                        {canSearchUsers ? (
+                            <>
+                                <input
+                                    className="control"
+                                    placeholder="이름으로 회원 검색"
+                                    value={userSearch}
+                                    onChange={(event) => setUserSearch(event.target.value)}
+                                />
+                                {usersLoading && <div className="message info mt-3">회원을 검색하는 중...</div>}
+                                {usersError && <div className="message error mt-3">{usersError}</div>}
+                                {availableUsers.length > 0 ? (
+                                    <ul className="m-0 mt-3 grid list-none gap-2 p-0">
+                                        {availableUsers.map((user) => (
+                                            <li key={user.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5">
+                                                <span className="text-sm font-bold text-ink">{user.name}</span>
+                                                <button
+                                                    type="button"
+                                                    className="shrink-0 rounded-md border border-brand bg-white px-3.5 py-1.5 text-[13px] font-bold text-brand hover:bg-[#d8efe3]"
+                                                    onClick={() => handleAdd(user.id)}
+                                                >
+                                                    추가
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    userSearch.trim() && !usersLoading && <p className="py-3 text-center text-sm text-muted">검색된 회원이 없습니다.</p>
+                                )}
+                            </>
+                        ) : (
+                            <p className="text-sm text-muted">회원 검색은 관리자와 팀장만 사용할 수 있습니다.</p>
+                        )}
                     </div>
                 )}
             </div>

@@ -20,10 +20,11 @@ React 19 + TypeScript + Vite 기반의 SPA 프론트엔드로 구성된 **모노
 
 - 🔐 실제 인증(scrypt 해싱 + 서명 토큰)과 **3단계 역할**(관리자 / 팀장 / 회원) 권한 체계
 - 👥 팀 단위 협업 — 권한 없는 팀은 목록에 노출되지 않고, 팀 생성은 **관리자·팀장만** 가능
-- ✅ 업무(Task) 등록·수정·상태 전환·검색/필터/정렬 — 담당자는 로그인 사용자로 서버가 자동 지정
+- ✅ 업무(Task) 등록·수정·상태 전환·검색/필터/정렬 — 담당자는 로그인 사용자로 서버가 자동 지정하고 관리자·팀장이 재배정 가능
 - 💾 SQLite 파일 DB 기반 영구 저장(서버 재시작에도 데이터 유지) + 스키마 자동 마이그레이션
-- 🛠️ 관리자 패널 — 계정 생성·역할 변경·비밀번호 초기화·활성화 + 전체 팀·업무 관리
-- 🤖 LLM 기반 팀원별 기여도 분석
+- 🛠️ 관리자 패널 — 계정·역할·비밀번호·활성화·전체 팀/업무·감사 로그·통계 관리
+- 🤖 LLM 기반 팀원별 기여도 분석 + LLM 미설정/실패 시 규칙 기반 fallback
+- 🔔 인앱 알림(업무 배정·마감 임박), 업무 댓글, 관리자 CSV 내보내기
 
 ## 👥 권한 체계
 
@@ -106,7 +107,7 @@ npm run dev:web        # 프론트만
 
 비밀번호는 코드에 **하드코딩하지 않습니다.** 최초 실행(DB가 비어 있을 때)에 다음 규칙으로 관리자 계정이 생성됩니다.
 
-- `ADMIN_PASSWORD`(8자 이상)를 지정하면 그 값으로 생성됩니다.
+- `ADMIN_PASSWORD`(10자 이상, 영문/숫자/특수문자 중 2종류 이상)를 지정하면 그 값으로 생성됩니다.
 - 지정하지 않으면 **무작위 비밀번호가 생성되어 서버 로그에 1회만 출력**됩니다.
   - 로컬 실행: 터미널 출력 확인 · Docker: `docker compose logs api`
 - 이메일/이름은 `ADMIN_EMAIL`(기본 `admin@example.com`) · `ADMIN_NAME`(기본 `관리자`)로 설정합니다.
@@ -127,7 +128,7 @@ npm run dev:web        # 프론트만
 | `TOKEN_SECRET` | (개발용 기본값) | 토큰 서명 비밀키 — **운영 필수 설정** |
 | `TOKEN_TTL_SECONDS` | `604800`(7일) | 토큰 만료(초) |
 | `ADMIN_EMAIL` / `ADMIN_NAME` | `admin@example.com` / `관리자` | 최초 시드 관리자 계정 |
-| `ADMIN_PASSWORD` | (미설정 시 무작위 생성·로그) | 관리자 비밀번호(8자 이상) |
+| `ADMIN_PASSWORD` | (미설정 시 무작위 생성·로그) | 관리자 비밀번호(10자 이상, 문자 종류 2개 이상) |
 | `DB_PATH` | `apps/api/data/app.db` | SQLite 파일 경로(로컬) |
 | `LLM_BASE_URL` / `LLM_MODEL` / `LLM_TIMEOUT_MS` | 로컬 플레이스홀더 | AI 기여도 분석용 LLM 설정 |
 
@@ -141,13 +142,24 @@ npm run dev:web        # 프론트만
 | `GET` | `/api/me` · `POST /api/logout` | 인증 |
 | `GET` | `/api/rooms` | 인증 (회원·팀장은 소속 팀만, 관리자는 전체) |
 | `POST` | `/api/rooms` | **관리자·팀장** (팀 생성) |
-| `PATCH/DELETE` | `/api/rooms/:id` | 회원(소속)·관리자 |
+| `PATCH/DELETE` | `/api/rooms/:id` | 관리자·팀장·방 생성자 |
+| `GET` | `/api/rooms/:id/members` | 회원(소속)·관리자 |
+| `POST/DELETE` | `/api/rooms/:id/members[/:userId]` | 관리자·팀장·방 생성자 |
 | `GET/POST/PATCH/DELETE` | `/api/rooms/:id/tasks[/:taskId]` | 회원(소속)·관리자 |
 | `POST` | `/api/rooms/:id/contribution` | 회원(소속)·관리자 |
+| `GET` | `/api/rooms/:id/stats` | 회원(소속)·관리자 |
+| `GET/POST/DELETE` | `/api/rooms/:id/tasks/:taskId/comments[/:commentId]` | 회원(소속)·관리자 |
+| `GET/POST` | `/api/me/notifications[/:id/read]` · `/read-all` | 인증 |
+| `GET` | `/api/users/search?q=` | 관리자·팀장 (`id`, `name`만 반환) |
 | `GET/POST` | `/api/admin/users` | 관리자 (생성 시 역할 지정 가능) |
 | `POST` | `/api/admin/users/:id/reset-password` | 관리자 |
 | `PATCH` | `/api/admin/users/:id/role` | 관리자 (회원/팀장/관리자) |
 | `PATCH` | `/api/admin/users/:id/active` | 관리자 (활성/비활성) |
+| `GET` | `/api/admin/audit` | 관리자 |
+| `GET` | `/api/admin/stats` | 관리자 |
+| `GET` | `/api/admin/export/tasks.csv` · `/users.csv` | 관리자 |
+| `POST` | `/api/me/logout-all` · `/api/me/password` | 인증 |
+| `POST` | `/api/admin/users/:id/logout-all` | 관리자 |
 
 전체 목록은 [`apps/api/README.md`](apps/api/README.md)를 참고하세요.
 
@@ -163,21 +175,30 @@ npm test               # 루트에서 (= apps/api 통합 테스트, 인메모리
 - 비밀번호는 `scrypt`(per-user salt)로 해싱하여 저장합니다.
 - 토큰은 HMAC-SHA256으로 서명·검증되며 만료(`exp`)를 포함합니다.
 - 비활성화된 계정의 토큰은 매 요청 시 DB 재조회로 차단됩니다.
+- 로그인 실패는 IP+email 기준 15분 5회로 제한되며, 초과 시 `Retry-After`와 함께 429를 반환합니다(단일 프로세스 인메모리 기준).
+- 토큰에는 `token_version`이 포함되어 비밀번호 초기화·역할/활성 변경·모든 기기 로그아웃 시 기존 세션이 즉시 무효화됩니다.
+- 계정 생성·비밀번호 초기화·본인 비밀번호 변경은 10자 이상 및 문자 종류 2개 이상 정책을 적용합니다.
 - 업무 담당자는 클라이언트 입력을 무시하고 인증된 사용자 이름으로 서버가 강제 지정합니다.
 - 권한 없는 팀(방)은 목록 조회 단계에서 제외되며, 직접 API 접근도 서버에서 차단(403)됩니다.
 - 팀 생성·역할 변경 등 권한이 필요한 작업은 서버에서 역할을 재검증합니다(프론트의 버튼 숨김에만 의존하지 않음).
+- 전체 사용자 목록은 관리자 전용이며, 팀원 초대용 검색은 이름 기반 `{ id, name }`만 반환합니다.
+- 담당자 재배정은 `assigneeId` 기반으로 관리자·팀장만 허용하며 이름 문자열 직접 변경은 거부합니다.
 - 저장소에는 내부 IP·실제 자격증명이 포함되어 있지 않습니다(LLM 엔드포인트는 환경변수로 설정).
+- 운영 배포에서는 `CORS_ORIGIN` 허용 목록과 nginx 보안 헤더(HSTS, CSP 등)를 사용합니다.
 
 ## 🗺️ 로드맵
 
 - [x] 실제 인증 + **3단계 역할(관리자/팀장/회원)** + SQLite 영구 저장 + 담당자 자동 지정 *(완료)*
 - [x] 관리자 패널(계정·역할·비번·활성화) + 팀 권한 스코프 *(완료)*
 - [x] 도메인 배포(Docker Compose · Coolify) + 스키마 자동 마이그레이션 *(완료)*
-- [ ] 감사 로그(로그인·생성·수정·삭제 기록)
-- [ ] 통계 대시보드(사용자/팀/업무 집계·완료율)
-- [ ] 알림(마감 임박·업무 배정)
-- [ ] 비밀번호 정책·재설정·로그인 시도 제한
-- [ ] 운영 자동화(백업·복구·CI/CD 파이프라인)
+- [x] **권한 범위 축소**(사용자 목록 노출 제한 · 팀원 관리 권한 제한) + **실패 시 상태 정합성** *(완료)*
+- [x] 감사 로그(로그인·생성·수정·삭제 기록) *(완료)*
+- [x] GitHub Actions CI(lint·test·build·audit) *(완료)*
+- [x] 운영 보안(로그인 시도 제한 · 비밀번호 정책 · 세션 무효화 · CORS·보안 헤더) *(완료)*
+- [x] 통계 대시보드(사용자/팀/업무 집계·완료율) + AI 기여도 분석 고도화 *(완료)*
+- [x] 알림(마감 임박·업무 배정) · 담당자 재배정 · 댓글/히스토리 · CSV 내보내기 *(완료)*
+
+> 상세 후속 계획: [`docs/phase2-plan.md`](docs/phase2-plan.md)
 
 ## 📄 라이선스
 

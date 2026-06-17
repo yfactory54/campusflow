@@ -1,4 +1,5 @@
 import type { AuthUser } from "../types/user";
+import NotificationBell from "./NotificationBell";
 
 interface HeaderProps {
   totalCount: number;
@@ -7,8 +8,10 @@ interface HeaderProps {
   currentUser: AuthUser | null;
   onBackToRoomList?: () => void;
   onOpenTeamManager?: () => void;
+  onOpenRoomStats?: () => void;
   onOpenAdmin?: () => void;
   onLogout?: () => void;
+  onLogoutAll?: () => void;
 }
 
 export default function Header({
@@ -18,8 +21,10 @@ export default function Header({
   currentUser,
   onBackToRoomList,
   onOpenTeamManager,
+  onOpenRoomStats,
   onOpenAdmin,
   onLogout,
+  onLogoutAll,
 }: HeaderProps) {
   return (
     <header className="border-b border-line bg-canvas">
@@ -64,6 +69,15 @@ export default function Header({
               관리자
             </button>
           )}
+          {currentRoomName && (
+            <button
+              type="button"
+              onClick={onOpenRoomStats}
+              className="btn secondary toggle"
+            >
+              팀 통계
+            </button>
+          )}
 
           <button
             type="button"
@@ -72,6 +86,14 @@ export default function Header({
             className="h-14 w-14 shrink-0 rounded-md bg-brand bg-[url(/person.svg)] bg-[length:28px] bg-center bg-no-repeat hover:bg-brand-dark sm:h-[70px] sm:w-[70px] sm:bg-[length:30px]"
           />
 
+          <NotificationBell />
+          <button
+            type="button"
+            onClick={onLogoutAll}
+            className="btn secondary toggle"
+          >
+            모든 기기 로그아웃
+          </button>
           <button
             type="button"
             onClick={onLogout}

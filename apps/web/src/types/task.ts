@@ -12,6 +12,7 @@ export interface Task {
   status: TaskStatus;
   assignee: string;
   memo: string;
+  roomId?: number;
   createdAt: string;
 }
 
@@ -36,4 +37,5 @@ export type TaskAction =
   | { type: 'UPDATE_TASK'; payload: { id: string; values: TaskFormValues } }
   | { type: 'DELETE_TASK'; payload: { id: string } }
   | { type: 'CHANGE_STATUS'; payload: { id: string; status: TaskStatus } }
+  | { type: 'CHANGE_ASSIGNEE'; payload: { id: string; assignee: string } }
   | { type: 'SET_TASKS'; payload: { tasks: Task[] } };

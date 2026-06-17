@@ -9,6 +9,10 @@ interface FetchOptions {
     body?: RequestBody;
 }
 
+type FetchResult<T> =
+    | { ok: true; data: T | null }
+    | { ok: false; error: string };
+
 // vite.config 의 define 으로 주입. 기본은 같은 도메인 상대경로 "/api/".
 declare const __API_BASE__: string;
 const API_BASE = __API_BASE__;
@@ -31,7 +35,7 @@ function useFetch<T = unknown>() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const request = useCallback(async (url: string, options: FetchOptions = {}): Promise<T | null> => {
+    const request = useCallback(async (url: string, options: FetchOptions = {}): Promise<FetchResult<T>> => {
         setLoading(true);
         setError(null);
         try {
@@ -62,14 +66,17 @@ function useFetch<T = unknown>() {
                     localStorage.removeItem("authToken");
                     window.dispatchEvent(new CustomEvent("auth:expired"));
                 }
-                throw new Error(getResponseErrorMessage(responseData) || "요청 처리에 실패했습니다.");
+                const message = getResponseErrorMessage(responseData) || "요청 처리에 실패했습니다.";
+                setError(message);
+                return { ok: false, error: message };
             }
 
             setData(responseData);
-            return responseData;
+            return { ok: true, data: responseData };
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "에러가 발생했습니다.");
-            return null;
+            const message = err instanceof Error ? err.message : "에러가 발생했습니다.";
+            setError(message);
+            return { ok: false, error: message };
         } finally {
             setLoading(false);
         }

@@ -12,6 +12,7 @@ services:
       # 운영 시 강력한 무작위 값으로 교체하세요.
       TOKEN_SECRET: "${TOKEN_SECRET:-change-me-in-production}"
       TOKEN_TTL_SECONDS: "${TOKEN_TTL_SECONDS:-604800}"
+      CORS_ORIGIN: "${CORS_ORIGIN:-}"
       # 최초 시드 관리자 계정. ADMIN_PASSWORD 미설정 시 무작위 생성되어
       # `docker compose logs api` 로 확인할 수 있습니다.
       ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@example.com}"

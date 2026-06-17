@@ -28,6 +28,13 @@ export const taskReducer = (tasks: Task[], action: TaskAction): Task[] => {
           : task,
       );
 
+    case "CHANGE_ASSIGNEE":
+      return tasks.map((task) =>
+        task.id === action.payload.id
+          ? { ...task, assignee: action.payload.assignee }
+          : task,
+      );
+
     case "SET_TASKS":
       return action.payload.tasks;
 

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type React from "react";
 import type { Task, TaskAction, TaskStatus } from "../types/task";
+import type { AuthUser } from "../types/user";
 import { formatDueDate, getDueLabel, getDueTone } from "../utils/dateUtils";
 import useFetch from "../fetch/useFetch";
 
@@ -9,11 +10,18 @@ import {
   statusLabels,
 } from "../utils/utils";
 import TaskEditForm from "./TaskEditForm";
+import TaskComments from "./TaskComments";
 
 interface TaskItemProps {
   task: Task;
   dispatch: React.Dispatch<TaskAction>;
   currentRoomId: number | null;
+  currentUser: AuthUser;
+}
+
+interface Member {
+  id: number;
+  name: string;
 }
 
 const priorityClassNames: Record<Task["priority"], string> = {
@@ -40,11 +48,24 @@ const statusButtonLabels: Record<TaskStatus, string> = {
   done: "다시 할 일",
 };
 
-export default function TaskItem({ task, dispatch, currentRoomId }: TaskItemProps) {
+export default function TaskItem({ task, dispatch, currentRoomId, currentUser }: TaskItemProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [members, setMembers] = useState<Member[]>([]);
 
-  const { request: deleteTask } = useFetch();
-  const { request: editTask } = useFetch<{ task: Task }>();
+  const canReassign = currentUser.role === "admin" || currentUser.role === "leader";
+  const { request: deleteTask, error: deleteError } = useFetch();
+  const { request: editTask, error: editError } = useFetch<{ task: Task }>();
+  const { request: fetchMembers } = useFetch<{ members: Member[] }>();
+
+  useEffect(() => {
+    if (!canReassign || !currentRoomId) return;
+    const loadMembers = async () => {
+      const result = await fetchMembers(`rooms/${currentRoomId}/members`);
+      if (result.ok && result.data?.members) setMembers(result.data.members);
+    };
+    loadMembers();
+  }, [canReassign, currentRoomId, fetchMembers]);
 
   const handleEditClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
     setIsEditing(true);
@@ -59,7 +80,8 @@ export default function TaskItem({ task, dispatch, currentRoomId }: TaskItemProp
       return;
     }
 
-    await deleteTask(`rooms/${currentRoomId}/tasks/${task.id}`, { method: "DELETE" });
+    const result = await deleteTask(`rooms/${currentRoomId}/tasks/${task.id}`, { method: "DELETE" });
+    if (!result.ok) return;
     dispatch({ type: "DELETE_TASK", payload: { id: task.id } });
   };
 
@@ -68,13 +90,27 @@ export default function TaskItem({ task, dispatch, currentRoomId }: TaskItemProp
   ) => {
     event.currentTarget.blur();
     const nextStatus = nextStatusByStatus[task.status];
-    await editTask(`rooms/${currentRoomId}/tasks/${task.id}`, {
+    const result = await editTask(`rooms/${currentRoomId}/tasks/${task.id}`, {
       method: "PATCH",
       body: { status: nextStatus },
     });
+    if (!result.ok) return;
     dispatch({
       type: "CHANGE_STATUS",
       payload: { id: task.id, status: nextStatus },
+    });
+  };
+
+  const handleAssigneeChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const assigneeId = Number(event.target.value);
+    const result = await editTask(`rooms/${currentRoomId}/tasks/${task.id}`, {
+      method: "PATCH",
+      body: { assigneeId },
+    });
+    if (!result.ok || !result.data?.task) return;
+    dispatch({
+      type: "CHANGE_ASSIGNEE",
+      payload: { id: task.id, assignee: result.data.task.assignee },
     });
   };
 
@@ -94,6 +130,11 @@ export default function TaskItem({ task, dispatch, currentRoomId }: TaskItemProp
   return (
     <>
       <article className="rounded-lg border border-line bg-white p-5 transition-transform hover:-translate-y-0.5">
+      {(deleteError || editError) && (
+        <div className="message error mb-3">
+          {deleteError || editError}
+        </div>
+      )}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="mb-3 flex flex-wrap gap-2">
@@ -109,6 +150,19 @@ export default function TaskItem({ task, dispatch, currentRoomId }: TaskItemProp
             <p className="mt-1 text-sm font-bold text-info">
               담당자: {task.assignee || "미지정"}
             </p>
+            {canReassign && members.length > 0 && (
+              <label className="mt-2 block text-xs font-bold text-muted">
+                담당자 재배정
+                <select className="control mt-1" value="" onChange={handleAssigneeChange}>
+                  <option value="">팀원 선택</option>
+                  {members.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
 
           <div className="flex flex-row flex-wrap gap-2 sm:min-w-[128px] sm:flex-col">
@@ -132,6 +186,13 @@ export default function TaskItem({ task, dispatch, currentRoomId }: TaskItemProp
               className="min-w-[88px] flex-1 whitespace-nowrap rounded-md border border-danger bg-white px-4 py-3 text-sm font-bold text-danger hover:bg-[#fde8e6] sm:w-full sm:flex-none"
             >
               삭제
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowComments((current) => !current)}
+              className="min-w-[88px] flex-1 whitespace-nowrap rounded-md border border-line bg-white px-4 py-3 text-sm font-bold text-ink hover:bg-gray-50 sm:w-full sm:flex-none"
+            >
+              댓글
             </button>
           </div>
         </div>
@@ -167,6 +228,7 @@ export default function TaskItem({ task, dispatch, currentRoomId }: TaskItemProp
             </p>
           </div>
         </div>
+        {showComments && currentRoomId && <TaskComments roomId={currentRoomId} taskId={task.id} />}
       </article>
     </>
   );

@@ -1,12 +1,14 @@
 import type React from "react";
 import type { Task, TaskAction } from "../types/task";
 import TaskItem from "./TaskItem";
+import type { AuthUser } from "../types/user";
 
 interface TaskListProps {
   tasks: Task[];
   totalCount: number;
   dispatch: React.Dispatch<TaskAction>;
   currentRoomId: number | null;
+  currentUser: AuthUser;
 }
 
 export default function TaskList({
@@ -14,6 +16,7 @@ export default function TaskList({
   totalCount,
   dispatch,
   currentRoomId,
+  currentUser,
 }: TaskListProps) {
   if (tasks.length === 0) {
     const isFilteredEmpty = totalCount > 0;
@@ -40,7 +43,7 @@ export default function TaskList({
     <>
       <section className="grid gap-4" aria-label="업무 목록">
         {tasks.map((task) => (
-          <TaskItem key={task.id} task={task} dispatch={dispatch} currentRoomId={currentRoomId} />
+          <TaskItem key={task.id} task={task} dispatch={dispatch} currentRoomId={currentRoomId} currentUser={currentUser} />
         ))}
       </section>
     </>

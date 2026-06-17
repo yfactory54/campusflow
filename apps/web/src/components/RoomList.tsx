@@ -6,10 +6,11 @@ interface Team {
     name: string;
     memberCount: number;
     description: string;
+    createdBy: number | null;
 }
 
 interface RoomListProps {
-    onSelectRoom: (roomId: number, roomName: string) => void;
+    onSelectRoom: (room: Team) => void;
     canCreateRoom: boolean;
 }
 
@@ -33,9 +34,9 @@ export default function RoomList({ onSelectRoom, canCreateRoom }: RoomListProps)
 
     useEffect(() => {
         const loadRooms = async () => {
-            const data = await fetchRooms("rooms");
-            if (data && data.rooms) {
-                setTeams(data.rooms);
+            const result = await fetchRooms("rooms");
+            if (result.ok && result.data?.rooms) {
+                setTeams(result.data.rooms);
             }
         };
         loadRooms();
@@ -48,7 +49,7 @@ export default function RoomList({ onSelectRoom, canCreateRoom }: RoomListProps)
             return;
         }
 
-        const data = await createRoom("rooms", {
+        const result = await createRoom("rooms", {
             method: "POST",
             body: {
                 name: newTeamName.trim(),
@@ -56,11 +57,11 @@ export default function RoomList({ onSelectRoom, canCreateRoom }: RoomListProps)
             },
         });
 
-        if (!data || !data.room) {
+        if (!result.ok || !result.data?.room) {
             return;
         }
 
-        setTeams([...teams, data.room]);
+        setTeams([...teams, result.data.room]);
         setNewTeamName("");
         setNewTeamDesc("");
         setIsAdding(false);
@@ -159,7 +160,7 @@ export default function RoomList({ onSelectRoom, canCreateRoom }: RoomListProps)
                         <button
                             type="button"
                             key={team.id}
-                            onClick={() => onSelectRoom(team.id, team.name)}
+                            onClick={() => onSelectRoom(team)}
                             className="flex w-full items-center justify-between gap-4 rounded-xl border border-slate-100 bg-white p-4 text-left hover:border-brand-hover hover:bg-[#e2f1ea]"
                         >
                             <div className="grid min-w-0 gap-1">

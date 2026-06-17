@@ -85,7 +85,7 @@ export default function TaskForm({ dispatch, currentRoomId }: TaskFormProps) {
     }
 
     // 담당자는 서버가 로그인 세션 사용자 이름으로 지정하므로 전송하지 않는다.
-    const data = await createTask(`rooms/${currentRoomId}/tasks`, {
+    const result = await createTask(`rooms/${currentRoomId}/tasks`, {
       method: "POST",
       body: {
         title: values.title.trim(),
@@ -95,11 +95,11 @@ export default function TaskForm({ dispatch, currentRoomId }: TaskFormProps) {
       },
     });
 
-    if (!data || !data.task) {
+    if (!result.ok || !result.data?.task) {
       return;
     }
 
-    dispatch({ type: "ADD_TASK", payload: { task: data.task } });
+    dispatch({ type: "ADD_TASK", payload: { task: result.data.task } });
     setValues(emptyValues);
     setErrors({});
   };

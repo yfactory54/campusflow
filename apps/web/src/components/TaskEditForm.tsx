@@ -89,7 +89,7 @@ export default function TaskEditForm({
     }
 
     // 수정 내용을 서버에 영구 반영(담당자/시간은 전송하지 않음).
-    const data = await updateTask(`rooms/${currentRoomId}/tasks/${task.id}`, {
+    const result = await updateTask(`rooms/${currentRoomId}/tasks/${task.id}`, {
       method: "PATCH",
       body: {
         title: values.title.trim(),
@@ -99,7 +99,7 @@ export default function TaskEditForm({
       },
     });
 
-    if (!data || !data.task) {
+    if (!result.ok || !result.data?.task) {
       return;
     }
 

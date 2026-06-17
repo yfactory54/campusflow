@@ -27,8 +27,10 @@ npm run test:api   # 테스트 (인메모리 DB 사용)
 | `DB_PATH` | `apps/api/data/app.db` | SQLite 파일 경로 |
 | `TOKEN_SECRET` | (개발용 기본값) | 토큰 서명 비밀키. **운영에서는 반드시 설정** |
 | `TOKEN_TTL_SECONDS` | `604800` (7일) | 토큰 만료 시간(초) |
+| `CORS_ORIGIN` | (미설정 시 `*`) | 쉼표 구분 허용 Origin. 운영에서는 웹 도메인만 지정 |
 | `ADMIN_EMAIL` / `ADMIN_NAME` | `admin@example.com` / `관리자` | 최초 시드 관리자 계정 |
-| `ADMIN_PASSWORD` | (미설정 시 무작위 생성·로그) | 관리자 비밀번호(8자 이상) |
+| `ADMIN_PASSWORD` | (미설정 시 무작위 생성·로그) | 관리자 비밀번호(10자 이상, 영문/숫자/특수문자 중 2종류 이상) |
+| `LOGIN_WINDOW_MS` / `LOGIN_MAX` | `900000` / `5` | 로그인 실패 제한 윈도와 최대 시도 횟수 |
 | `LLM_BASE_URL` / `LLM_MODEL` / `LLM_TIMEOUT_MS` | 로컬 플레이스홀더 | AI 기여도 분석용 LLM 설정 |
 
 ## 데이터 / 시드
@@ -57,10 +59,12 @@ npm run test:api   # 테스트 (인메모리 DB 사용)
 ## 인증
 
 - `POST /api/login` → `{ token, user }`. 이후 요청은 `Authorization: Bearer <token>` 헤더 필요.
-- `GET /api/me` → 현재 사용자, `POST /api/logout` → 클라이언트가 토큰을 폐기(stateless).
+- `GET /api/me` → 현재 사용자, `POST /api/logout` → 클라이언트가 토큰을 폐기(stateless), `POST /api/me/logout-all` → 모든 세션 무효화.
+- 토큰에는 사용자별 `token_version`이 포함되어 비밀번호 초기화·역할/활성 변경 후 기존 토큰이 즉시 거부됩니다.
+- 로그인 실패는 IP+email 기준 인메모리 rate limit으로 제한됩니다. 다중 인스턴스 운영 시 Redis 등 공유 스토어로 교체해야 합니다.
 - 역할: `admin` | `leader` | `member`. 관리자는 모든 팀/업무에 접근하고, 팀장은 팀(방)을 생성할 수 있으며, 회원/팀장은 자신이 속한 방에서만 동작합니다.
 - `GET /api/rooms` 는 역할별로 스코프됩니다(회원·팀장=소속 방만, 관리자=전체). `POST /api/rooms`(팀 생성)는 관리자·팀장만 가능합니다.
-- 업무 등록 시 담당자는 **로그인 세션 사용자 이름으로 서버에서 자동 지정**되며 클라이언트 입력은 무시됩니다.
+- 업무 등록 시 담당자는 **로그인 세션 사용자 이름으로 서버에서 자동 지정**되며 클라이언트 입력은 무시됩니다. 담당자 재배정은 관리자·팀장만 `assigneeId`로 요청할 수 있습니다.
 
 ## 주요 엔드포인트
 
@@ -69,13 +73,23 @@ npm run test:api   # 테스트 (인메모리 DB 사용)
 | `GET` | `/api/health` | 공개 |
 | `POST` | `/api/login` | 공개 |
 | `GET` | `/api/me` / `POST /api/logout` | 인증 |
-| `GET` | `/api/users` | 인증 |
+| `POST` | `/api/me/logout-all` · `/api/me/password` | 인증 |
+| `GET` | `/api/users/search?q=` | 관리자·팀장 (`id`, `name`만 반환) |
 | `GET` | `/api/rooms` | 인증 (회원·팀장=소속 방만, 관리자=전체) |
 | `POST` | `/api/rooms` | 관리자·팀장 (팀 생성) |
-| `PATCH/DELETE` | `/api/rooms/:id` | 회원(소속) 또는 관리자 |
-| `GET/POST/DELETE` | `/api/rooms/:id/members[/:userId]` | 회원(소속) 또는 관리자 |
+| `PATCH/DELETE` | `/api/rooms/:id` | 관리자·팀장·방 생성자 |
+| `GET` | `/api/rooms/:id/members` | 회원(소속) 또는 관리자 |
+| `POST/DELETE` | `/api/rooms/:id/members[/:userId]` | 관리자·팀장·방 생성자 |
 | `GET/POST/PATCH/DELETE` | `/api/rooms/:id/tasks[/:taskId]` | 회원(소속) 또는 관리자 |
 | `POST` | `/api/rooms/:id/contribution` | 회원(소속) 또는 관리자 |
+| `GET` | `/api/rooms/:id/stats` | 회원(소속) 또는 관리자 |
+| `GET/POST/DELETE` | `/api/rooms/:id/tasks/:taskId/comments[/:commentId]` | 회원(소속) 또는 관리자 |
+| `GET` | `/api/me/notifications?unread=1` | 인증 |
+| `POST` | `/api/me/notifications/:id/read` · `/api/me/notifications/read-all` | 인증 |
 | `GET/POST` | `/api/admin/users` | 관리자 |
 | `POST` | `/api/admin/users/:id/reset-password` | 관리자 |
 | `PATCH` | `/api/admin/users/:id/role` · `/active` | 관리자 |
+| `POST` | `/api/admin/users/:id/logout-all` | 관리자 |
+| `GET` | `/api/admin/audit` | 관리자 |
+| `GET` | `/api/admin/stats` | 관리자 |
+| `GET` | `/api/admin/export/tasks.csv` · `/api/admin/export/users.csv` | 관리자 |

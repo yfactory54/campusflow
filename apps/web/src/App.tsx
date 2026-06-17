@@ -8,6 +8,7 @@ import Login from './components/Login';
 import RoomList from './components/RoomList';
 import TeamManager from './components/TeamManager';
 import AdminPanel from './components/AdminPanel';
+import RoomStatsPanel from './components/RoomStatsPanel';
 import { taskReducer } from './reducers/taskReducer';
 import { priorityRanks } from './utils/utils';
 import type { Task, TaskFilters } from './types/task';
@@ -25,6 +26,12 @@ interface MeResponse {
   user: AuthUser;
 }
 
+interface RoomSummary {
+  id: number;
+  name: string;
+  createdBy: number | null;
+}
+
 const initialFilters: TaskFilters = {
   query: '',
   priority: 'all',
@@ -38,14 +45,15 @@ export default function App() {
   const [view, setView] = useState<View>('login');
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [initializing, setInitializing] = useState(() => Boolean(localStorage.getItem('authToken')));
-  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
-  const [selectedRoomName, setSelectedRoomName] = useState<string>('');
+  const [selectedRoom, setSelectedRoom] = useState<RoomSummary | null>(null);
   const [tasks, dispatch] = useReducer(taskReducer, []);
   const [filters, setFilters] = useState<TaskFilters>(initialFilters);
   const [showTeamManager, setShowTeamManager] = useState(false);
+  const [showRoomStats, setShowRoomStats] = useState(false);
 
   const { request: fetchTasks, loading: tasksLoading, error: tasksError } = useFetch<TasksResponse>();
   const { request: fetchMe } = useFetch<MeResponse>();
+  const { request: logoutAll } = useFetch<{ ok: boolean }>();
 
   const handleLogout = () => {
     const token = localStorage.getItem('authToken');
@@ -58,9 +66,16 @@ export default function App() {
     }
     localStorage.removeItem('authToken');
     setCurrentUser(null);
-    setSelectedRoomId(null);
-    setSelectedRoomName('');
+    setSelectedRoom(null);
+    setShowTeamManager(false);
+    setShowRoomStats(false);
     setView('login');
+  };
+
+  const handleLogoutAll = async () => {
+    if (!confirm('모든 기기에서 로그아웃하시겠습니까? 현재 세션도 종료됩니다.')) return;
+    const result = await logoutAll('me/logout-all', { method: 'POST' });
+    if (result.ok) handleLogout();
   };
 
   // 세션 복원: 저장된 토큰이 있으면 /api/me 로 사용자 확인
@@ -69,9 +84,9 @@ export default function App() {
       return;
     }
     const restore = async () => {
-      const data = await fetchMe('me');
-      if (data?.user) {
-        setCurrentUser(data.user);
+      const result = await fetchMe('me');
+      if (result.ok && result.data?.user) {
+        setCurrentUser(result.data.user);
         setView('roomList');
       } else {
         localStorage.removeItem('authToken');
@@ -85,8 +100,9 @@ export default function App() {
   useEffect(() => {
     const onExpired = () => {
       setCurrentUser(null);
-      setSelectedRoomId(null);
-      setSelectedRoomName('');
+      setSelectedRoom(null);
+      setShowTeamManager(false);
+      setShowRoomStats(false);
       setView('login');
     };
     window.addEventListener('auth:expired', onExpired);
@@ -94,16 +110,16 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (selectedRoomId) {
+    if (selectedRoom) {
       const loadTasksFromServer = async () => {
-        const data = await fetchTasks(`rooms/${selectedRoomId}/tasks`);
-        if (data && data.tasks) {
-          dispatch({ type: 'SET_TASKS', payload: { tasks: data.tasks } });
+        const result = await fetchTasks(`rooms/${selectedRoom.id}/tasks`);
+        if (result.ok && result.data?.tasks) {
+          dispatch({ type: 'SET_TASKS', payload: { tasks: result.data.tasks } });
         }
       };
       loadTasksFromServer();
     }
-  }, [selectedRoomId, fetchTasks]);
+  }, [selectedRoom, fetchTasks]);
 
   const filteredTasks = useMemo(() => {
     const query = filters.query.trim().toLowerCase();
@@ -158,9 +174,8 @@ export default function App() {
     return (
       <RoomList
         canCreateRoom={currentUser.role === 'admin' || currentUser.role === 'leader'}
-        onSelectRoom={(roomId, roomName) => {
-          setSelectedRoomId(roomId);
-          setSelectedRoomName(roomName);
+        onSelectRoom={(room) => {
+          setSelectedRoom(room);
           setView('dashboard');
         }}
       />
@@ -171,19 +186,29 @@ export default function App() {
       <Header
         totalCount={tasks.length}
         completedCount={tasks.filter((task) => task.status === 'done').length}
-        currentRoomName={selectedRoomName}
+        currentRoomName={selectedRoom?.name}
         currentUser={currentUser}
         onBackToRoomList={() => setView('roomList')}
         onOpenTeamManager={() => setShowTeamManager(true)}
         onOpenAdmin={() => setView('admin')}
+        onOpenRoomStats={() => setShowRoomStats(true)}
         onLogout={handleLogout}
+        onLogoutAll={handleLogoutAll}
       />
 
-      {showTeamManager && selectedRoomId && (
+      {showTeamManager && selectedRoom && (
         <TeamManager
-          roomId={selectedRoomId}
-          tasks={tasks}
+          roomId={selectedRoom.id}
+          room={selectedRoom}
+          currentUser={currentUser}
           onClose={() => setShowTeamManager(false)}
+        />
+      )}
+      {showRoomStats && selectedRoom && (
+        <RoomStatsPanel
+          roomId={selectedRoom.id}
+          roomName={selectedRoom.name}
+          onClose={() => setShowRoomStats(false)}
         />
       )}
 
@@ -205,13 +230,13 @@ export default function App() {
 
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-5 lg:grid-cols-[380px_1fr]">
         <div className="flex min-w-0 flex-col gap-5">
-          <TaskForm dispatch={dispatch} currentRoomId={selectedRoomId} />
+          <TaskForm dispatch={dispatch} currentRoomId={selectedRoom?.id ?? null} />
         </div>
 
         <div className="flex min-w-0 flex-col gap-5">
           <DashboardSummary tasks={tasks} />
           <FilterBar filters={filters} resultCount={filteredTasks.length} onFilterChange={setFilters} />
-          <TaskList tasks={filteredTasks} totalCount={tasks.length} dispatch={dispatch} currentRoomId={selectedRoomId} />
+          <TaskList tasks={filteredTasks} totalCount={tasks.length} dispatch={dispatch} currentRoomId={selectedRoom?.id ?? null} currentUser={currentUser} />
         </div>
       </main>
     </>

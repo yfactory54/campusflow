@@ -46,15 +46,15 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         if (!validateEmail(email)) return;
         if (!validatePassword(password)) return;
 
-        const data = await login("login", {
+        const result = await login("login", {
             method: "POST",
             body: { email, password },
         });
-        if (!data || !data.token || !data.user) {
+        if (!result.ok || !result.data?.token || !result.data.user) {
             return;
         }
 
-        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("authToken", result.data.token);
 
         if (rememberMe) {
             localStorage.setItem("savedEmail", email);
@@ -63,7 +63,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             localStorage.removeItem("savedEmail");
             localStorage.removeItem("rememberMe");
         }
-        onLoginSuccess(data.user);
+        onLoginSuccess(result.data.user);
     };
 
     return (
